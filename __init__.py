@@ -19,11 +19,25 @@ import folder_paths
 from folder_paths import add_model_folder_path, get_filename_list, get_folder_paths
 from tqdm import tqdm
 import re
+import logging
+import execution
 
-from . import custom_routes
-# import routes
+from .integration_mode import resolve_integration_mode
 
 ag_path = os.path.join(os.path.dirname(__file__))
+
+_FULL_INTEGRATION_ENABLED, _INTEGRATION_MODE_REASON = resolve_integration_mode(
+    execution.execute
+)
+
+if _FULL_INTEGRATION_ENABLED:
+    from . import custom_routes
+else:
+    logging.getLogger(__name__).warning(
+        "Comfy Deploy full integration disabled: %s. "
+        "Comfy Deploy nodes remain available.",
+        _INTEGRATION_MODE_REASON,
+    )
 
 
 def get_python_files(path):
@@ -86,5 +100,7 @@ for file in files:
                 # print(display_name, name)
                 NODE_DISPLAY_NAME_MAPPINGS[name] = display_name
 
-WEB_DIRECTORY = "web-plugin"
+if _FULL_INTEGRATION_ENABLED:
+    WEB_DIRECTORY = "web-plugin"
+
 __all__ = ["NODE_CLASS_MAPPINGS", "NODE_DISPLAY_NAME_MAPPINGS"]
